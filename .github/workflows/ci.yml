@@ -32,7 +32,7 @@ jobs:
           run: |
             docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest cmake -S . -B build
             docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest cmake --build build
-            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest ctest --test-dir build -C Release
+            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest ctest --test-dir build -C Debug
 
         - name: Push
           if: ${{ github.event_name == 'push' && github.ref == '/refs/heads/main' }}
