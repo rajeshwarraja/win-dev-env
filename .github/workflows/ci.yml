@@ -19,18 +19,21 @@ jobs:
         - name: Log in to Docker Hub
           uses: docker/login-action@v3
           with:
-            username: ${{ secrets.DOCKER_USERNAME }}
+            username: ${{ vars.DOCKER_USERNAME }}
             password: ${{ secrets.DOCKER_PASSWORD }}
 
         - name: Create Image
-          run: docker build -t ${{ secrets.DOCKER_USERNAME }}/win-dev-env:latest -m 2GB .
+          run: docker build -t ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest -m 2GB .
 
         - name: Run Docker container
-          run: docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ secrets.DOCKER_USERNAME }}/win-dev-env:latest ./scripts/create-manifest.ps1 -OutputPath ./manifests.md
+          run: docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest ./scripts/create-manifest.ps1 -OutputPath ./manifests.md
 
         - name: Build
-          run: docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ secrets.DOCKER_USERNAME }}/win-dev-env:latest cmake -S . -B build; cmake --build build; ctest --test-dir build -C Release
+          run: |
+            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest cmake -S . -B build
+            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest cmake --build build
+            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest ctest --test-dir build -C Release
 
         - name: Push
           if: ${{ github.event_name == 'push' && github.ref == '/refs/heads/main' }}
-          run: docker push ${{ secrets.DOCKER_USERNAME }}/win-dev-env:latest
+          run: docker push ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest
