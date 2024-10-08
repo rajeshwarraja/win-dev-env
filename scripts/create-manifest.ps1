@@ -5,7 +5,7 @@ param (
 
 
 # Command-Let
-function ConvertTo-Markdown {
+function ConvertTo-BuildToolsManifest {
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
         [PSCustomObject[]]$InputObject
@@ -59,13 +59,11 @@ foreach ($framework in $frameworks) {
     }
 }
 
+# tools dark and 7zip are excluded from the manifest since
+# they are used only fdor Scoop installation process; not used in build
 $apps = (scoop list) | Where-Object { 
-    ($_.Name -like "nuget" ) -or 
-    ($_.Name -like "cmake" ) -or
-    ($_.Name -like "ninja" ) -or
-    ($_.Name -like "python") -or
-    ($_.Name -like "conan" ) -or
-    ($_.Name -like "git"   )
+    ($_.Name -notlike "7zip" ) -and 
+    ($_.Name -notlike "dark" ) 
 }
 foreach ($app in $apps) {
     $manifest += [PSCustomObject]@{
@@ -75,6 +73,4 @@ foreach ($app in $apps) {
 }
 
 $manifest | Format-Table -Property Name, Version
-
-$markdown = $manifest | ConvertTo-Markdown
-Write-Output $markdown | Out-File -FilePath $OutputPath
+$manifest | ConvertTo-BuildToolsManifest | Out-File -FilePath $OutputPath -Encoding utf8
