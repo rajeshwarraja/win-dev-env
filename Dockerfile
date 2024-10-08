@@ -7,7 +7,7 @@ SHELL ["cmd", "/S", "/C"]
 
 RUN `
     # Download build tools bootstrapper
-    curl.exe -fSLo vs_buildtools.exe https://aka.ms/vs/17/release.ltsc.17.8/vs_buildtools.exe `
+    curl.exe -fSLo vs_buildtools.exe https://download.visualstudio.microsoft.com/download/pr/1ddfd51d-41a3-4a5f-bb23-a614eadbe85a/0424cf7a010588b8dd9a467c89c57045a24c0507c5c6b6ffc88cead508b5f972/vs_BuildTools.exe `
     `
     # Install Build Tools
     && (start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
