@@ -9,8 +9,37 @@ on:
             - main
 
 jobs:
+    versioning:
+      runs-on: ubuntu-latest
+      name: Versioning
+      outputs:
+        package_version: ${{ steps.version.outputs.semVer }}
+
+      steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.0.0
+        with:
+          versionSpec: '6.x'
+
+      - name: Determine Version
+        id: version
+        uses: gittools/actions/gitversion/execute@v3.0.0
+
     build:
+        needs: [versioning]
+        name: Build
         runs-on: windows-latest
+        env:
+            DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+            DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+            SEMVER: ${{ needs.versioning.outputs.package_version }}
+            DOCKER_IMAGE_VERSION: ${{ vars.DOCKER_USERNAME }}/win-dev-env:${{ needs.versioning.outputs.package_version }}
+            DOCKER_IMAGE_LATEST: ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest
 
         steps:
         - name: Checkout
@@ -19,21 +48,40 @@ jobs:
         - name: Log in to Docker Hub
           uses: docker/login-action@v3
           with:
-            username: ${{ vars.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
+            username: ${{ env.DOCKER_USERNAME }}
+            password: ${{ env.DOCKER_PASSWORD }}
 
         - name: Create Image
-          run: docker build -t ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest -m 2GB .
+          run: >
+            docker build 
+            -t ${{ env.DOCKER_IMAGE_LATEST }} 
+            -t ${{ env.DOCKER_IMAGE_VERSION }} 
+            -m 2GB .
+
+        - name: Verify Image
+          run: |
+            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ env.DOCKER_IMAGE_VERSION }} cmake -S . -B build
+            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ env.DOCKER_IMAGE_VERSION }} cmake --build build
+            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ env.DOCKER_IMAGE_VERSION }} ctest --test-dir build -C Debug
 
         - name: Run Docker container
-          run: docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest ./scripts/create-manifest.ps1 -OutputPath ./manifests.md
+          run: >
+            docker run --rm 
+            -v "$(pwd):C:\dev" 
+            -w C:\dev 
+            ${{ env.DOCKER_IMAGE_VERSION }} ./scripts/create-manifest.ps1 -OutputPath ./build/manifests.md
 
-        - name: Build
-          run: |
-            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest cmake -S . -B build
-            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest cmake --build build
-            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest ctest --test-dir build -C Debug
-
-        - name: Push
+        - name: Push Image
           if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          run: docker push ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest
+          run: |
+            docker push ${{ env.DOCKER_IMAGE_VERSION }} -a
+
+        - name: Create Release
+          if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: >
+            gh release create v${{ needs.versioning.outputs.package_version }}
+            --repo ${{ github.repository }}
+            --title v${{ needs.versioning.outputs.package_version }} 
+            --notes-file ./build/manifests.md
