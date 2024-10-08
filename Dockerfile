@@ -37,7 +37,7 @@ RUN `
    # Install Scoop
    Invoke-WebRequest -Uri https://get.scoop.sh -outfile C:\scoop.ps1; C:\scoop.ps1 -RunAsAdmin; `
    # Install NuGet, CMake, Ninja and Conan
-   scoop install nuget@5.11.1 cmake@3.25.1 ninja@1.12.1 python@3.10.6 conan@2.8.0 git@2.31.1; `
+   scoop install nuget cmake ninja python conan git; `
    && (del /q C:\scoop.ps1)
 
 LABEL maintainer="Rajeshwar Raja <rajeshwarraja@gmail.com>"
