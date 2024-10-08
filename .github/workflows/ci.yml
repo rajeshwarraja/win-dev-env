@@ -13,7 +13,7 @@ jobs:
       runs-on: ubuntu-latest
       name: Versioning
       outputs:
-        package_version: ${{ steps.version.outputs.semVer }}
+        package_version: ${{ steps.version.outputs.majorMinorPatch }}
 
       steps:
       - name: Checkout
@@ -31,6 +31,8 @@ jobs:
         uses: gittools/actions/gitversion/execute@v3.0.0
 
     build:
+        permissions:
+          contents: write # to allow release creation
         needs: [versioning]
         name: Build
         runs-on: windows-latest
@@ -78,10 +80,11 @@ jobs:
 
         - name: Create Release
           if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: >
-            gh release create v${{ needs.versioning.outputs.package_version }}
-            --repo ${{ github.repository }}
-            --title v${{ needs.versioning.outputs.package_version }} 
-            --notes-file ./build/manifests.md
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: v${{ needs.versioning.outputs.package_version }}
+            name: v${{ needs.versioning.outputs.package_version }}
+            body_path: ./build/manifests.md
+            token: ${{ secrets.GITHUB_TOKEN }}
+            draft: false
+            prerelease: false
