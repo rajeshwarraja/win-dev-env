@@ -73,7 +73,7 @@ jobs:
             -v "${{ github.workspace }}:C:\dev" 
             -w "C:\dev" 
             ${{ env.DOCKER_IMAGE_VERSION }}
-            conan build .
+            conan build . --version ${{ needs.versioning.outputs.package_version }}
 
         - name: Push Image
           if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -87,7 +87,7 @@ jobs:
             tag_name: v${{ needs.versioning.outputs.package_version }}
             name: v${{ needs.versioning.outputs.package_version }}
             body: Docker Image ${{ env.DOCKER_IMAGE_VERSION }}
-            body_path: ./build/manifests.md
+            body_path: ./build/manifest.md
             token: ${{ secrets.GITHUB_TOKEN }}
             draft: false
             prerelease: false
