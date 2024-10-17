@@ -42,6 +42,7 @@ jobs:
             SEMVER: ${{ needs.versioning.outputs.package_version }}
             DOCKER_IMAGE_VERSION: ${{ vars.DOCKER_USERNAME }}/win-dev-env:${{ needs.versioning.outputs.package_version }}
             DOCKER_IMAGE_LATEST: ${{ vars.DOCKER_USERNAME }}/win-dev-env:latest
+            CONAN_HOME: C:\dev\.conan
 
         steps:
         - name: Checkout
@@ -60,18 +61,19 @@ jobs:
             -t ${{ env.DOCKER_IMAGE_VERSION }} 
             -m 2GB .
 
-        - name: Verify Image
+        - name: Setup Conan configuraiton
           run: |
-            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ env.DOCKER_IMAGE_VERSION }} cmake -S . -B build
-            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ env.DOCKER_IMAGE_VERSION }} cmake --build build
-            docker run --rm -v "$(pwd):C:\dev" -w C:\dev ${{ env.DOCKER_IMAGE_VERSION }} ctest --test-dir build -C Debug
+            mkdir .conan -Force
+            docker run --rm -e CONAN_HOME -v "${{ github.workspace }}:C:\dev" -w "C:\dev" ${{ env.DOCKER_IMAGE_VERSION }} conan profile detect --force
 
-        - name: Run Docker container
+        - name: Verify Image
           run: >
             docker run --rm 
-            -v "$(pwd):C:\dev" 
-            -w C:\dev 
-            ${{ env.DOCKER_IMAGE_VERSION }} ./scripts/create-manifest.ps1 -OutputPath ./build/manifests.md
+            -e CONAN_HOME 
+            -v "${{ github.workspace }}:C:\dev" 
+            -w "C:\dev" 
+            ${{ env.DOCKER_IMAGE_VERSION }}
+            conan build .
 
         - name: Push Image
           if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -84,6 +86,7 @@ jobs:
           with:
             tag_name: v${{ needs.versioning.outputs.package_version }}
             name: v${{ needs.versioning.outputs.package_version }}
+            body: Docker Image ${{ env.DOCKER_IMAGE_VERSION }}
             body_path: ./build/manifests.md
             token: ${{ secrets.GITHUB_TOKEN }}
             draft: false

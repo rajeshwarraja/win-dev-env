@@ -74,3 +74,5 @@ foreach ($app in $apps) {
 
 $manifest | Format-Table -Property Name, Version
 $manifest | ConvertTo-BuildToolsManifest | Out-File -FilePath $OutputPath -Encoding utf8
+
+Write-Host "Manifest written to ${OutputPath}"

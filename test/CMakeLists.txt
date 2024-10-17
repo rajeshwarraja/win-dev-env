@@ -1,5 +1,6 @@
 project(${PROJECT_NAME}.Test)
 
+
 find_program(NUGET nuget REQUIRED)
 if(NOT NUGET)
     message(FATAL_ERROR "NuGet not found!")
@@ -31,3 +32,9 @@ endif()
 
 add_subdirectory(cpp)
 add_subdirectory(dot_net)
+
+find_program(POWERSHELL_PATH NAMES powershell)
+execute_process(
+    COMMAND ${POWERSHELL_PATH} 
+        "${CMAKE_SOURCE_DIR}/scripts/create-manifest.ps1 -OutputPath ${CMAKE_SOURCE_DIR}/build/manifest.md"
+)
