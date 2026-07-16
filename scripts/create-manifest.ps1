@@ -47,16 +47,8 @@ foreach ($sdk in $sdks) {
 }
 
 $manifest += [PSCustomObject]@{
-    Name = "Microsoft Visual Studio 2022 Build Tools"
+    Name = "Microsoft Visual Studio 2026 Build Tools"
     Version = $env:VSCMD_VER
-}
-
-$frameworks = Get-ChildItem -Path "C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework" -Directory | Where-Object { $_.Name -match "v4\.8(.\d+)?" }
-foreach ($framework in $frameworks) {
-    $manifest += [PSCustomObject]@{
-        Name = "Microsoft .NET Framework"
-        Version = $framework.Name
-    }
 }
 
 # tools dark and 7zip are excluded from the manifest since
