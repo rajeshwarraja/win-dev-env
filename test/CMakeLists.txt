@@ -31,7 +31,6 @@ endif()
 
 
 add_subdirectory(cpp)
-add_subdirectory(dot_net)
 
 find_program(POWERSHELL_PATH NAMES powershell)
 execute_process(

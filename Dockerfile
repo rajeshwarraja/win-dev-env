@@ -1,25 +1,23 @@
 # escape=`
 
-FROM mcr.microsoft.com/windows/servercore:ltsc2022
+# tags from: https://mcr.microsoft.com/en-us/artifact/mar/windows/servercore/tags
+FROM mcr.microsoft.com/windows/servercore:ltsc2025
 
 # Restore the default Windows shell for correct batch processing.
 SHELL ["cmd", "/S", "/C"]
 
 RUN `
     # Download build tools bootstrapper
-    curl.exe -fSLo vs_buildtools.exe https://download.visualstudio.microsoft.com/download/pr/1ddfd51d-41a3-4a5f-bb23-a614eadbe85a/0424cf7a010588b8dd9a467c89c57045a24c0507c5c6b6ffc88cead508b5f972/vs_BuildTools.exe `
+    # Download link from: https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-history
+    curl.exe -fSLo vs_buildtools.exe https://download.visualstudio.microsoft.com/download/pr/e05c0bc8-d058-4b2b-937c-1c80073d7633/b62e8829c6a6c043aacf2ef657456213ab71099c7e46a610f95d6778bfc9beb0/vs_BuildTools.exe`
     `
     # Install Build Tools
     && (start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
       --installPath C:\BuildTools `
       `
-      --includeRecommended `
-      `
       --add Microsoft.VisualStudio.Workload.VCTools `
       --remove Microsoft.VisualStudio.Component.VC.CMake.Project `
       --remove Microsoft.VisualStudio.Component.TestTools.BuildTools `
-      --add Microsoft.VisualStudio.Component.VC.ATL `
-      --add Microsoft.VisualStudio.Component.VC.ATLMFC `
       `
       --add Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools `
     ) `
